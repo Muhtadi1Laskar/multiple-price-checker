@@ -20,10 +20,12 @@ export const extractMainData = async (url) => {
         const bookTitleSelector = "h1[class='bookTitle_bookName__B4CEH ']";
         const specificationTabLocator = page.getByRole(tagName, { name: buttonName });
 
+        await blockExtraResources(page);
+
         await page.goto(url);
         await specificationTabLocator.waitFor({ state: 'visible' });
         await specificationTabLocator.click();
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(800);
 
         const title = await page.locator(bookTitleSelector).evaluate(node => {
             return Array.from(node.childNodes)
@@ -78,12 +80,17 @@ export const extractMainData = async (url) => {
 
 export const browserScraper = async (bookInfo, websiteInfo) => {
     const { browser, page } = await getPage();
-    const { websiteName, url, selectors } = websiteInfo;
-    const { isbn, title, author, language } = bookInfo;
+    const { websiteName, url, selectors, searchURL } = websiteInfo;
+    const {
+        isbn,
+        title,
+        author,
+        language
+    } = bookInfo;
+
     const {
         bookTypeSelector,
         bookPriceSelector,
-        searchSelector,
         priceCardSelector,
         publisherSelector,
         authorSelector
@@ -94,25 +101,27 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
     const linkIdentifier = isbn ? isbn : title;
 
 
-    const bookItemSelector = `//div[@class="a-section"]//span[@data-component-type="s-product-image"]//a[contains(@href, "${linkIdentifier}")]`;
-    const searchLocator = page.locator(searchSelector);
-    const bookItemLocator = page.locator(bookItemSelector).first();
+    const bookItemLocator = page.locator(
+        `//div[@class="a-section"]` +
+        `//span[@data-component-type="s-product-image"]` +
+        `//a[contains(@href, "${linkIdentifier}")]`
+    ).first();
 
     try {
-        await page.goto(url, { waitUntil: "domcontentloaded" });
-        await searchLocator.fill(searchQuery);
+        await blockExtraResources(page);
 
-        console.log()
+        const fullSearchURL = new URL("/s", searchURL);
+        fullSearchURL.searchParams.set("k", searchQuery);
 
-        await Promise.all([
-            page.waitForNavigation({ waitUntil: "domcontentloaded" }).catch(() => { }),
-            searchLocator.press("Enter")
-        ]);
+        await page.goto(fullSearchURL.toString(), {
+            waitUntil: "domcontentloaded"
+        });
 
-        await bookItemLocator.waitFor({ state: "attached", timeout: 1000 }).catch(() => { });
+        const bookDetailsPageURL = await bookItemLocator.isVisible() ?
+            await bookItemLocator.getAttribute("href") :
+            null;
 
-        const counts = await bookItemLocator.count();
-        if (counts === 0) {
+        if (!bookDetailsPageURL) {
             return {
                 websiteName,
                 title,
@@ -120,16 +129,18 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
             };
         }
 
-        const [productPage] = await Promise.all([
-            page.waitForEvent("popup"),
-            bookItemLocator.click()
-        ]);
+        const fullBookLinkURL = new URL(
+            bookDetailsPageURL,
+            url
+        ).toString();
 
-        await productPage.waitForLoadState("domcontentloaded");
+        await page.goto(fullBookLinkURL, { 
+            waitUntil: "domcontentloaded" 
+        });
 
-        const publisherLocator = productPage.locator(publisherSelector);
-        const authorLocator = productPage.locator(authorSelector);
-        
+        const publisherLocator = page.locator(publisherSelector);
+        const authorLocator = page.locator(authorSelector);
+
         const publisher = await publisherLocator.isVisible() ?
             await publisherLocator.textContent() :
             null;
@@ -137,7 +148,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
             await authorLocator.first().textContent() :
             null;
 
-        const editionButtons = productPage.locator(priceCardSelector);
+        const editionButtons = page.locator(priceCardSelector);
         const count = await editionButtons.count();
 
         const editions = [];
@@ -164,14 +175,36 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
             author,
             bookPrices: editions,
             discountPrice: null,
-            link: productPage.url(),
+            link: page.url(),
             message: "Successfully scraped the prices"
         };
-    } finally {
+    } catch (error) {
+        console.error(`Failed to parse data from ${websiteName}`, error);
+        return {
+            websiteName,
+            title,
+            message: "Failed to parse data"
+        }
+    }
+    finally {
         await browser.close();
     }
 }
 
 
+const blockExtraResources = async (page) => {
+    await page.route("**/*", async (route) => {
+        const resourceType = route.request().resourceType();
 
+        if (
+            resourceType === "image" ||
+            resourceType === "font" ||
+            resourceType === "media"
+        ) {
+            await route.abort();
+            return;
+        }
 
+        await route.continue();
+    });
+}

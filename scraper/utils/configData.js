@@ -13,7 +13,7 @@ export const websiteConfig = [
     },
     {
         websiteName: "amazon.in",
-        baseURL: "https://www.amazon.in/s?k=",
+        searchURL: "https://www.amazon.in/s?k=",
         linkSelector: "div[data-cy='title-receipe'].nth-child(1)",
         priceSelector: "div.a-section.apex-core-price-identifier .a-price-whole",
         url: "https://www.amazon.in/",
