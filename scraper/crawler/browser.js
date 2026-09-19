@@ -1,10 +1,10 @@
 import { chromium } from "playwright";
-import { extractNumber } from "../utils/utils.js";
+import { extractNumber, removeParentheses } from "../utils/utils.js";
 import { bookLanguage } from "../utils/configData.js";
 
 export const getPage = async () => {
     const browser = await chromium.launch({
-        headless: true
+        headless: false
     });
     const page = await browser.newPage();
 
@@ -62,9 +62,10 @@ export const extractMainData = async (url) => {
             null;
 
         const languageEN = bookLanguage[language] || null;
+        const cleanTitle = removeParentheses(title)
 
         return {
-            title,
+            title: cleanTitle,
             isbn,
             publication,
             author,
@@ -100,6 +101,8 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
     try {
         await page.goto(url, { waitUntil: "domcontentloaded" });
         await searchLocator.fill(searchQuery);
+
+        console.log()
 
         await Promise.all([
             page.waitForNavigation({ waitUntil: "domcontentloaded" }).catch(() => { }),

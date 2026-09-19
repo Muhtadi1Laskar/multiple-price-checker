@@ -17,3 +17,14 @@ export const extractNumber = (str) => {
 
     return null;
 };
+
+export const removeParentheses = (str) => {
+    if (!str) return '';
+    
+    return str
+        // Remove '(' and ')' and everything in between
+        .replace(/\s*\([^)]*\)/g, '')
+        // Clean up any remaining double spaces and trim surrounding whitespace
+        .replace(/\s+/g, ' ')
+        .trim();
+};
