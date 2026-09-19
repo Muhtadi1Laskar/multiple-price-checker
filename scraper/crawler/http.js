@@ -43,20 +43,45 @@ const buildAttempts = (bookInfo) => {
     if (bookInfo.publication) {
         attempts.push({
             type: "title",
-            query: `${bookInfo.title} ${bookInfo.publication}`
+            query: `${bookInfo.title} ${bookInfo.author} ${bookInfo.publication}`.trim()
         });
     }
 
     if (bookInfo.author) {
         attempts.push({
             type: "titleAndauthor",
-            query: `${bookInfo.title} ${bookInfo.author}`
+            query: `${bookInfo.title} ${bookInfo.author}`.trim()
         });
     }
+
+    console.log(attempts);
 
     return attempts;
 }
 
+
+const buildSearchURL = (baseURL, query) => {
+    const cleanQuery = !isNumeric(query) ? encodeURIComponent(query).replaceAll('%20', '+') : query;
+    return baseURL + cleanQuery;
+}
+
+const getDetailsPageLink = (rawHTML, linkSelector, url, bookTitle) => {
+    const $ = cheerio.load(rawHTML);
+
+    return $(linkSelector)
+    // .filter((_, element) => $(element).text().trim() === bookTitle)
+        .map((_, element) => {
+            const href = $(element).attr("href");
+
+            console.log($(element).text().trim());
+
+            return href
+                ? new URL(href, url).toString()
+                : null;
+        })
+        .get()
+        .filter(Boolean);
+}
 
 export const searchBook = async (bookInfo, websiteInfo) => {
     const { baseURL, websiteName, linkSelector, url } = websiteInfo;
@@ -77,29 +102,6 @@ export const searchBook = async (bookInfo, websiteInfo) => {
     }
 
     return null;
-}
-
-const buildSearchURL = (baseURL, query) => {
-    const cleanQuery = !isNumeric(query) ? encodeURIComponent(query).replaceAll('%20', '+') : query;
-    return baseURL + cleanQuery;
-}
-
-const getDetailsPageLink = (rawHTML, linkSelector, url, bookTitle) => {
-    const $ = cheerio.load(rawHTML);
-
-    return $(linkSelector)
-    .filter((_, element) => $(element).text().trim() === bookTitle)
-        .map((_, element) => {
-            const href = $(element).attr("href");
-
-            console.log($(element).text().trim());
-
-            return href
-                ? new URL(href, url).toString()
-                : null;
-        })
-        .get()
-        .filter(Boolean);
 }
 
 
@@ -143,6 +145,7 @@ export const getBookInfo = async (bookInfo) => {
         if (scraperType === "browserAutomation") {
             const {
                 bookPrices,
+                title,
                 link,
                 websiteName,
                 discountPrice,
@@ -151,6 +154,7 @@ export const getBookInfo = async (bookInfo) => {
 
             result.push({
                 websiteName,
+                title,
                 price: bookPrices,
                 discountPrice,
                 link,

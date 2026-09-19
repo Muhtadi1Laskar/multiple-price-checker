@@ -1,5 +1,6 @@
 import { chromium } from "playwright";
 import { extractNumber } from "../utils/utils.js";
+import { bookLanguage } from "../utils/configData.js";
 
 export const getPage = async () => {
     const browser = await chromium.launch({
@@ -42,6 +43,10 @@ export const extractMainData = async (url) => {
             .filter({ hasText: "Author" })
             .locator("td")
             .nth(1);
+        const languageLocator = page.locator("tr")
+            .filter({ hasText: "Language" })
+            .locator("td")
+            .nth(1);
 
         const isbn = await isbnLocator.isVisible() ?
             await isbnLocator.textContent() :
@@ -52,12 +57,18 @@ export const extractMainData = async (url) => {
         const author = await authorLocator.isVisible() ?
             await authorLocator.textContent() :
             null;
+        const language = await languageLocator.isVisible() ?
+            await languageLocator.textContent() :
+            null;
+
+        const languageEN = bookLanguage[language] || null;
 
         return {
             title,
             isbn,
             publication,
-            author
+            author,
+            language: languageEN
         };
     } finally {
         await browser.close();
@@ -67,13 +78,15 @@ export const extractMainData = async (url) => {
 export const browserScraper = async (bookInfo, websiteInfo) => {
     const { browser, page } = await getPage();
     const { websiteName, url, selectors } = websiteInfo;
-    const { isbn, title, publication, author } = bookInfo;
+    const { isbn, title, publication, author, language } = bookInfo;
     const { bookTypeSelector, bookPriceSelector, searchSelector, priceCardSelector } = selectors;
 
-    const searchQuery = !isbn ? title + author : isbn;
+    const isbnQuery = language === "bn" ? isbn : `${title} ${isbn}`;
+    const searchQuery = !isbn ? `${title} ${author}` : isbnQuery;
+    const linkIdentifier = isbn ? isbn : title;
 
-   
-    const bookItemSelector = `//div[@class="a-section"]//span[@data-component-type="s-product-image"]//a[contains(@href, "${searchQuery}")]`;
+
+    const bookItemSelector = `//div[@class="a-section"]//span[@data-component-type="s-product-image"]//a[contains(@href, "${linkIdentifier}")]`;
     const searchLocator = page.locator(searchSelector);
     const bookItemLocator = page.locator(bookItemSelector).first();
 
@@ -83,6 +96,14 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         await searchLocator.fill(searchQuery);
         await searchLocator.press("Enter");
         await bookItemLocator.waitFor({ state: "visible" });
+
+        if (!await bookItemLocator.isVisible()) {
+            return {
+                websiteName,
+                title,
+                message: `The book is not available on ${websiteName}`
+            };
+        }
 
         const [productPage] = await Promise.all([
             page.waitForEvent("popup"),
@@ -113,7 +134,9 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
 
         return {
             websiteName,
+            title,
             bookPrices: editions,
+            discountPrice: null,
             link: productPage.url(),
             message: "Successfully scraped the prices"
         };

@@ -23,3 +23,8 @@ export const websiteConfig = [
         }
     }
 ];
+
+export const bookLanguage = {
+    "ইংরেজি": "en",
+    "বাংলা": "bn"
+};
