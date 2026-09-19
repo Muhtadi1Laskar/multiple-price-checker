@@ -2,17 +2,27 @@ import { chromium } from "playwright";
 import { extractNumber, removeParentheses } from "../utils/utils.js";
 import { bookLanguage } from "../utils/configData.js";
 
-export const getPage = async () => {
-    const browser = await chromium.launch({
-        headless: false
-    });
-    const page = await browser.newPage();
+let browserPromise;
 
-    return { browser, page };
+const getBrowser = () => {
+    if (!browserPromise) {
+        browserPromise = chromium.launch({
+            headless: false
+        });
+    }
+    return browserPromise;
+}
+
+export const getPage = async () => {
+    const browser = await getBrowser();
+    const context = await browser.newContext();
+    const page = await context.newPage();
+
+    return { browser, page, context };
 }
 
 export const extractMainData = async (url) => {
-    const { browser, page } = await getPage();
+    const { page, context } = await getPage();
 
     try {
         const tagName = "button";
@@ -74,12 +84,12 @@ export const extractMainData = async (url) => {
             language: languageEN
         };
     } finally {
-        await browser.close();
+        await context.close();
     }
 }
 
 export const browserScraper = async (bookInfo, websiteInfo) => {
-    const { browser, page } = await getPage();
+    const { page, context } = await getPage();
     const { websiteName, url, selectors, searchURL } = websiteInfo;
     const {
         isbn,
@@ -99,7 +109,6 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
     const isbnQuery = language === "bn" ? isbn : `${title} ${isbn}`;
     const searchQuery = !isbn ? `${title} ${author}` : isbnQuery;
     const linkIdentifier = isbn ? isbn : title;
-
 
     const bookItemLocator = page.locator(
         `//div[@class="a-section"]` +
@@ -134,8 +143,8 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
             url
         ).toString();
 
-        await page.goto(fullBookLinkURL, { 
-            waitUntil: "domcontentloaded" 
+        await page.goto(fullBookLinkURL, {
+            waitUntil: "domcontentloaded"
         });
 
         const publisherLocator = page.locator(publisherSelector);
@@ -187,7 +196,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         }
     }
     finally {
-        await browser.close();
+        await context.close();
     }
 }
 
