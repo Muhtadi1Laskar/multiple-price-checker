@@ -74,12 +74,13 @@ export const extractMainData = async (url) => {
             null;
 
         const languageEN = bookLanguage[language] || null;
-        const cleanTitle = removeParentheses(title)
+        const cleanTitle = removeParentheses(title);
+        const cleanPublication = removeParentheses(publication);
 
         return {
             title: cleanTitle,
             isbn,
-            publication,
+            publication: cleanPublication,
             author,
             language: languageEN
         };
