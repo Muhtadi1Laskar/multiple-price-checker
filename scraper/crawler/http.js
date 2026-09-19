@@ -117,9 +117,6 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
         authorSelector 
     } = selectors;
 
-    console.log(publisherSelector);
-
-
     if (!bookDetailsPageLink) {
         return {
             websiteName,

@@ -4,7 +4,7 @@ import { bookLanguage } from "../utils/configData.js";
 
 export const getPage = async () => {
     const browser = await chromium.launch({
-        headless: false
+        headless: true
     });
     const page = await browser.newPage();
 
