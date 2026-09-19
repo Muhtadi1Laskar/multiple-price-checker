@@ -111,7 +111,11 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     const { websiteName, selectors } = websiteInfo;
     const { title } = bookInfo;
     const bookDetailsPageLink = await searchBook(bookInfo, websiteInfo);
-    const { publisherSelector, priceSelector } = selectors;
+    const { 
+        publisherSelector, 
+        priceSelector, 
+        authorSelector 
+    } = selectors;
 
     console.log(publisherSelector);
 
@@ -125,8 +129,10 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     }
 
     const rawHTML = await makeRequest(bookDetailsPageLink[0]);
+
     const $ = cheerio.load(rawHTML);
     const publisher = $(publisherSelector).text().trim();
+    const author = $(authorSelector).text().trim();
     const prices = $(priceSelector)
         .map((_, el) => extractNumber($(el).text().trim()))
         .get();
@@ -136,6 +142,7 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     return {
         websiteName,
         title,
+        author,
         publisher,
         discountPrice,
         price,
@@ -156,6 +163,7 @@ export const getBookInfo = async (bookInfo) => {
                 bookPrices,
                 title,
                 publisher,
+                author,
                 link,
                 websiteName,
                 discountPrice,
@@ -165,6 +173,7 @@ export const getBookInfo = async (bookInfo) => {
             result.push({
                 websiteName,
                 title,
+                author,
                 publisher,
                 price: bookPrices,
                 discountPrice,
@@ -177,6 +186,7 @@ export const getBookInfo = async (bookInfo) => {
         const {
             websiteName,
             title,
+            author,
             publisher,
             discountPrice,
             price,
@@ -187,6 +197,7 @@ export const getBookInfo = async (bookInfo) => {
         result.push({
             websiteName,
             title,
+            author,
             publisher,
             discountPrice,
             price,

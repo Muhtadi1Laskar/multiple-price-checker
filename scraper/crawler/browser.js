@@ -84,7 +84,8 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         bookPriceSelector, 
         searchSelector, 
         priceCardSelector, 
-        publisherSelector 
+        publisherSelector,
+        authorSelector
     } = selectors;
 
     const isbnQuery = language === "bn" ? isbn : `${title} ${isbn}`;
@@ -119,9 +120,13 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         await productPage.waitForLoadState("domcontentloaded");
 
         const publisherLocator = productPage.locator(publisherSelector);
-        console.log(await publisherLocator.textContent());
+        const authorLocator = productPage.locator(authorSelector);
+
         const publisher = await publisherLocator.isVisible() ? 
             await publisherLocator.textContent() : 
+            null;
+        const author = await authorLocator.first().isVisible() ?
+            await authorLocator.first().textContent() :
             null;
 
         const editionButtons = productPage.locator(priceCardSelector);
@@ -148,6 +153,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
             websiteName,
             title,
             publisher,
+            author,
             bookPrices: editions,
             discountPrice: null,
             link: productPage.url(),

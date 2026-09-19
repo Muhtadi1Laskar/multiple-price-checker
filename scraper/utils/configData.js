@@ -7,7 +7,8 @@ export const websiteConfig = [
         scraperType: "http",
         selectors: {
             publisherSelector: "h6:contains('Publication'):eq(0) + a span",
-            priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']"
+            priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']",
+            authorSelector: "a[class*='single_product_author_name'] span"
         }
     },
     {
@@ -22,7 +23,8 @@ export const websiteConfig = [
             bookPriceSelector: ".slot-price",
             searchSelector: "div.nav-search-field input",
             priceCardSelector: "#buybox-top-container span.a-button-inner",
-            publisherSelector: "(//span[contains(text(), 'Publisher')])[2]//following-sibling::span"
+            publisherSelector: "(//span[contains(text(), 'Publisher')])[2]//following-sibling::span",
+            authorSelector: "span[class='author notFaded'] a"
         }
     }
 ];
