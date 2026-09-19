@@ -3,9 +3,12 @@ export const websiteConfig = [
         websiteName: "baatighar",
         baseURL: "https://baatighar.com/shop?search=",
         linkSelector: "p.card_title a",
-        priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']",
         url: "https://baatighar.com/",
         scraperType: "http",
+        selectors: {
+            publisherSelector: "h6:contains('Publication'):eq(0) + a span",
+            priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']"
+        }
     },
     {
         websiteName: "amazon.in",
@@ -18,8 +21,8 @@ export const websiteConfig = [
             bookTypeSelector: ".slot-title",
             bookPriceSelector: ".slot-price",
             searchSelector: "div.nav-search-field input",
-            priceCardSelector: "#buybox-top-container span.a-button-inner"
-
+            priceCardSelector: "#buybox-top-container span.a-button-inner",
+            publisherSelector: "(//span[contains(text(), 'Publisher')])[2]//following-sibling::span"
         }
     }
 ];

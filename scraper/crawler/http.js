@@ -54,8 +54,6 @@ const buildAttempts = (bookInfo) => {
         });
     }
 
-    console.log(attempts);
-
     return attempts;
 }
 
@@ -65,15 +63,13 @@ const buildSearchURL = (baseURL, query) => {
     return baseURL + cleanQuery;
 }
 
-const getDetailsPageLink = (rawHTML, linkSelector, url, bookTitle) => {
+const getDetailsPageLink = ({ rawHTML, linkSelector, url, bookTitle }) => {
     const $ = cheerio.load(rawHTML);
 
     return $(linkSelector)
-    // .filter((_, element) => $(element).text().trim() === bookTitle)
+        // .filter((_, element) => $(element).text().trim() === bookTitle)
         .map((_, element) => {
             const href = $(element).attr("href");
-
-            console.log($(element).text().trim());
 
             return href
                 ? new URL(href, url).toString()
@@ -84,7 +80,7 @@ const getDetailsPageLink = (rawHTML, linkSelector, url, bookTitle) => {
 }
 
 export const searchBook = async (bookInfo, websiteInfo) => {
-    const { baseURL, websiteName, linkSelector, url } = websiteInfo;
+    const { baseURL, linkSelector } = websiteInfo;
     const { title } = bookInfo;
     const attempts = buildAttempts(bookInfo);
     const finalCandidates = [];
@@ -93,7 +89,13 @@ export const searchBook = async (bookInfo, websiteInfo) => {
         const url = buildSearchURL(baseURL, attempt.query);
 
         const rawHTML = await makeRequest(url);
-        const candidates = getDetailsPageLink(rawHTML, linkSelector, url, title);
+        const paylaod = {
+            rawHTML,
+            linkSelector,
+            url,
+            title,
+        }
+        const candidates = getDetailsPageLink(paylaod);
 
         if (candidates.length > 0) {
             finalCandidates.push(...candidates);
@@ -106,9 +108,13 @@ export const searchBook = async (bookInfo, websiteInfo) => {
 
 
 export const htmlScraper = async (bookInfo, websiteInfo) => {
-    const { websiteName } = websiteInfo;
+    const { websiteName, selectors } = websiteInfo;
     const { title } = bookInfo;
     const bookDetailsPageLink = await searchBook(bookInfo, websiteInfo);
+    const { publisherSelector, priceSelector } = selectors;
+
+    console.log(publisherSelector);
+
 
     if (!bookDetailsPageLink) {
         return {
@@ -120,7 +126,8 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
 
     const rawHTML = await makeRequest(bookDetailsPageLink[0]);
     const $ = cheerio.load(rawHTML);
-    const prices = $(websiteInfo.priceSelector)
+    const publisher = $(publisherSelector).text().trim();
+    const prices = $(priceSelector)
         .map((_, el) => extractNumber($(el).text().trim()))
         .get();
 
@@ -129,6 +136,7 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     return {
         websiteName,
         title,
+        publisher,
         discountPrice,
         price,
         link: bookDetailsPageLink[0],
@@ -137,6 +145,7 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
 }
 
 export const getBookInfo = async (bookInfo) => {
+    const finalResult = {};
     const result = [];
 
     for (const websiteInfo of websiteConfig) {
@@ -146,6 +155,7 @@ export const getBookInfo = async (bookInfo) => {
             const {
                 bookPrices,
                 title,
+                publisher,
                 link,
                 websiteName,
                 discountPrice,
@@ -155,6 +165,7 @@ export const getBookInfo = async (bookInfo) => {
             result.push({
                 websiteName,
                 title,
+                publisher,
                 price: bookPrices,
                 discountPrice,
                 link,
@@ -166,6 +177,7 @@ export const getBookInfo = async (bookInfo) => {
         const {
             websiteName,
             title,
+            publisher,
             discountPrice,
             price,
             link,
@@ -175,6 +187,7 @@ export const getBookInfo = async (bookInfo) => {
         result.push({
             websiteName,
             title,
+            publisher,
             discountPrice,
             price,
             link,
