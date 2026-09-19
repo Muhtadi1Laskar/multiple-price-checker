@@ -59,7 +59,9 @@ const buildAttempts = (bookInfo) => {
 
 
 const buildSearchURL = (baseURL, query) => {
-    const cleanQuery = !isNumeric(query) ? encodeURIComponent(query).replaceAll('%20', '+') : query;
+    const cleanQuery = !isNumeric(query) ? 
+        encodeURIComponent(query).replaceAll('%20', '+') : 
+        query;
     return baseURL + cleanQuery;
 }
 
