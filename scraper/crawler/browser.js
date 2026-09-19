@@ -78,12 +78,12 @@ export const extractMainData = async (url) => {
 export const browserScraper = async (bookInfo, websiteInfo) => {
     const { browser, page } = await getPage();
     const { websiteName, url, selectors } = websiteInfo;
-    const { isbn, title, publication, author, language } = bookInfo;
-    const { 
-        bookTypeSelector, 
-        bookPriceSelector, 
-        searchSelector, 
-        priceCardSelector, 
+    const { isbn, title, author, language } = bookInfo;
+    const {
+        bookTypeSelector,
+        bookPriceSelector,
+        searchSelector,
+        priceCardSelector,
         publisherSelector,
         authorSelector
     } = selectors;
@@ -98,13 +98,18 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
     const bookItemLocator = page.locator(bookItemSelector).first();
 
     try {
-        await page.goto(url);
-        await page.waitForLoadState("domcontentloaded");
+        await page.goto(url, { waitUntil: "domcontentloaded" });
         await searchLocator.fill(searchQuery);
-        await searchLocator.press("Enter");
-        await bookItemLocator.waitFor({ state: "visible" });
 
-        if (!await bookItemLocator.isVisible()) {
+        await Promise.all([
+            page.waitForNavigation({ waitUntil: "domcontentloaded" }).catch(() => { }),
+            searchLocator.press("Enter")
+        ]);
+
+        await bookItemLocator.waitFor({ state: "attached", timeout: 1000 }).catch(() => { });
+
+        const counts = await bookItemLocator.count();
+        if (counts === 0) {
             return {
                 websiteName,
                 title,
@@ -121,9 +126,9 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
 
         const publisherLocator = productPage.locator(publisherSelector);
         const authorLocator = productPage.locator(authorSelector);
-
-        const publisher = await publisherLocator.isVisible() ? 
-            await publisherLocator.textContent() : 
+        
+        const publisher = await publisherLocator.isVisible() ?
+            await publisherLocator.textContent() :
             null;
         const author = await authorLocator.first().isVisible() ?
             await authorLocator.first().textContent() :
