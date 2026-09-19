@@ -1,31 +1,8 @@
 import * as cheerio from 'cheerio';
 import { browserScraper } from './browser.js';
 import { extractNumber } from '../utils/utils.js';
+import { websiteConfig } from '../utils/configData.js';
 
-const websiteURLS = {
-    baatighar: "https://baatighar.com/shop?search=",
-    prothoma: "https://www.prothoma.com/website/search?search=",
-    amazon: "https://www.amazon.in/s?k="
-};
-
-const websiteConfig = [
-    {
-        name: "baatighar",
-        baseURL: "https://baatighar.com/shop?search=",
-        linkSelector: "a.single_card_image_blk",
-        priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']",
-        url: "https://baatighar.com/",
-        scraperType: "http"
-    },
-    {
-        name: "amazon india",
-        baseURL: "https://www.amazon.in/s?k=",
-        linkSelector: "div[data-cy='title-receipe'].nth-child(1)",
-        priceSelector: "div.a-section.apex-core-price-identifier .a-price-whole",
-        url: "https://www.amazon.in/",
-        scraperType: "browserAutomation"
-    }
-]
 
 export const makeRequest = async (url) => {
     try {
@@ -71,12 +48,20 @@ const buildAttempts = (bookInfo) => {
         });
     }
 
+    if (bookInfo.author) {
+        attempts.push({
+            type: "titleAndauthor",
+            query: `${bookInfo.title} ${bookInfo.author}`
+        });
+    }
+
     return attempts;
 }
 
 
 export const searchBook = async (bookInfo, websiteInfo) => {
-    const { baseURL, name, linkSelector, url } = websiteInfo;
+    const { baseURL, websiteName, linkSelector, url } = websiteInfo;
+    const { title } = bookInfo;
     const attempts = buildAttempts(bookInfo);
     const finalCandidates = [];
 
@@ -84,7 +69,7 @@ export const searchBook = async (bookInfo, websiteInfo) => {
         const url = buildSearchURL(baseURL, attempt.query);
 
         const rawHTML = await makeRequest(url);
-        const candidates = getDetailsPageLink(rawHTML, linkSelector, url);
+        const candidates = getDetailsPageLink(rawHTML, linkSelector, url, title);
 
         if (candidates.length > 0) {
             finalCandidates.push(...candidates);
@@ -100,12 +85,15 @@ const buildSearchURL = (baseURL, query) => {
     return baseURL + cleanQuery;
 }
 
-const getDetailsPageLink = (rawHTML, linkSelector, url) => {
+const getDetailsPageLink = (rawHTML, linkSelector, url, bookTitle) => {
     const $ = cheerio.load(rawHTML);
 
     return $(linkSelector)
+    .filter((_, element) => $(element).text().trim() === bookTitle)
         .map((_, element) => {
             const href = $(element).attr("href");
+
+            console.log($(element).text().trim());
 
             return href
                 ? new URL(href, url).toString()
@@ -115,46 +103,79 @@ const getDetailsPageLink = (rawHTML, linkSelector, url) => {
         .filter(Boolean);
 }
 
+
+export const htmlScraper = async (bookInfo, websiteInfo) => {
+    const { websiteName } = websiteInfo;
+    const { title } = bookInfo;
+    const bookDetailsPageLink = await searchBook(bookInfo, websiteInfo);
+
+    if (!bookDetailsPageLink) {
+        return {
+            websiteName,
+            title,
+            message: `The book is not available on ${websiteName}`
+        };
+    }
+
+    const rawHTML = await makeRequest(bookDetailsPageLink[0]);
+    const $ = cheerio.load(rawHTML);
+    const prices = $(websiteInfo.priceSelector)
+        .map((_, el) => extractNumber($(el).text().trim()))
+        .get();
+
+    const [discountPrice, price] = prices;
+
+    return {
+        websiteName,
+        title,
+        discountPrice,
+        price,
+        link: bookDetailsPageLink[0],
+        message: "Successfully scraped the prices"
+    }
+}
+
 export const getBookInfo = async (bookInfo) => {
     const result = [];
 
     for (const websiteInfo of websiteConfig) {
-        const { name, scraperType } = websiteInfo;
+        const { scraperType } = websiteInfo;
 
-        if(scraperType === "browserAutomation") {
-            const { bookPrices, link } = await browserScraper(bookInfo, websiteInfo);
+        if (scraperType === "browserAutomation") {
+            const {
+                bookPrices,
+                link,
+                websiteName,
+                discountPrice,
+                message
+            } = await browserScraper(bookInfo, websiteInfo);
+
             result.push({
-                name,
+                websiteName,
                 price: bookPrices,
-                discountPrice: 0,
-                link
+                discountPrice,
+                link,
+                message
             })
             continue;
         }
 
-        const bookDetailsPageLink = await searchBook(bookInfo, websiteInfo);
-
-        if (!bookDetailsPageLink) {
-            result.push({
-                name: name,
-                message: `The book is not available on ${name}`
-            });
-            continue;
-        }
-
-        const rawHTML = await makeRequest(bookDetailsPageLink[0]);
-        const $ = cheerio.load(rawHTML);
-        const prices = $(websiteInfo.priceSelector)
-            .map((_, el) => extractNumber($(el).text().trim()))
-            .get();
-
-        const [discountPrice, price] = prices;
-
-        result.push({
-            name,
+        const {
+            websiteName,
+            title,
             discountPrice,
             price,
-            link: bookDetailsPageLink[0]
+            link,
+            message
+        } = await htmlScraper(bookInfo, websiteInfo);
+
+        result.push({
+            websiteName,
+            title,
+            discountPrice,
+            price,
+            link,
+            message
         });
     }
     return result;

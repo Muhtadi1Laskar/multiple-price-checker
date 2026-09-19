@@ -38,6 +38,10 @@ export const extractMainData = async (url) => {
             .filter({ hasText: "Publisher" })
             .locator("td")
             .nth(1);
+        const authorLocator = page.locator("tr")
+            .filter({ hasText: "Author" })
+            .locator("td")
+            .nth(1);
 
         const isbn = await isbnLocator.isVisible() ?
             await isbnLocator.textContent() :
@@ -45,11 +49,15 @@ export const extractMainData = async (url) => {
         const publication = await publicationLocator.isVisible() ?
             await publicationLocator.textContent() :
             null;
+        const author = await authorLocator.isVisible() ?
+            await authorLocator.textContent() :
+            null;
 
         return {
             title,
             isbn,
-            publication
+            publication,
+            author
         };
     } finally {
         await browser.close();
@@ -58,23 +66,22 @@ export const extractMainData = async (url) => {
 
 export const browserScraper = async (bookInfo, websiteInfo) => {
     const { browser, page } = await getPage();
-    const { baseURL, name, linkSelector, url } = websiteInfo;
-    const { isbn, title, publication } = bookInfo;
+    const { websiteName, url, selectors } = websiteInfo;
+    const { isbn, title, publication, author } = bookInfo;
+    const { bookTypeSelector, bookPriceSelector, searchSelector, priceCardSelector } = selectors;
 
-    // const bookItemSelector = `//span[@data-component-type="s-product-image"]//a[contains(@href, "/dp/${isbn.slice(3)}")]`;
-    const bookItemSelector = `//div[@class="a-section"]//span[@data-component-type="s-product-image"]//a[contains(@href, "${isbn}")]`;
-    const bookTypeSelector = ".slot-title";
-    const bookPriceSelector = ".slot-price";
+    const searchQuery = !isbn ? title + author : isbn;
 
-    const searchLocator = page.getByRole("searchbox", { name: "Search Amazon.in" });
+   
+    const bookItemSelector = `//div[@class="a-section"]//span[@data-component-type="s-product-image"]//a[contains(@href, "${searchQuery}")]`;
+    const searchLocator = page.locator(searchSelector);
     const bookItemLocator = page.locator(bookItemSelector).first();
 
     try {
         await page.goto(url);
-        await searchLocator.waitFor({ state: "visible" });
-        await searchLocator.fill(isbn);
+        await page.waitForLoadState("domcontentloaded");
+        await searchLocator.fill(searchQuery);
         await searchLocator.press("Enter");
-
         await bookItemLocator.waitFor({ state: "visible" });
 
         const [productPage] = await Promise.all([
@@ -84,7 +91,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
 
         await productPage.waitForLoadState("domcontentloaded");
 
-        const editionButtons = productPage.locator("#buybox-top-container span.a-button-inner");
+        const editionButtons = productPage.locator(priceCardSelector);
         const count = await editionButtons.count();
 
         const editions = [];
@@ -92,8 +99,8 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         for (let i = 0; i < count; i++) {
             const button = editionButtons.nth(i);
 
-            const bookType = await button.locator(".slot-title").textContent();
-            const price = await button.locator(".slot-price").textContent();
+            const bookType = await button.locator(bookTypeSelector).textContent();
+            const price = await button.locator(bookPriceSelector).textContent();
             const cleanPrice = extractNumber(price);
 
             if (bookType.includes("Audiobook")) continue;
@@ -105,8 +112,10 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         }
 
         return {
+            websiteName,
             bookPrices: editions,
-            link: productPage.url()
+            link: productPage.url(),
+            message: "Successfully scraped the prices"
         };
     } finally {
         await browser.close();

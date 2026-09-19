@@ -2,7 +2,7 @@ import { extractMainData } from "./crawler/browser.js";
 import { getBookInfo, searchBook } from "./crawler/http.js";
 
 // const URL = "https://www.rokomari.com/book/340423/the-master-and-margarita";
-const URL = "https://www.rokomari.com/book/216371/madonna";
+const URL = "https://www.rokomari.com/book/86047/indigo-selected-stories";
 
 (async () => {
     try {
