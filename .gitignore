@@ -1,0 +1,12 @@
+# Ignore all node_modules folders
+node_modules/
+*/node_modules/
+*/*/node_modules/
+
+# Also ignore common Node.js files you don't want to track
+*.log
+.npm
+.env
+.DS_Store
+dist/
+build/

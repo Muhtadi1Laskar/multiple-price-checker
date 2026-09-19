@@ -1,0 +1,17 @@
+{
+  "name": "price-checker",
+  "version": "1.0.0",
+  "description": "A simple application that retrives prices of a product from different sources and let's user compare",
+  "license": "ISC",
+  "author": "Muhtadi Laskar",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {},
+  "dependencies": {
+    "cheerio": "^1.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.1"
+  }
+}
