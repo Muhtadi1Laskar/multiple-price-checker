@@ -3,7 +3,6 @@ import { browserScraper } from './browser.js';
 import { extractNumber } from '../utils/utils.js';
 import { websiteConfig } from '../utils/configData.js';
 
-
 export const makeRequest = async (url) => {
     try {
         const response = await fetch(url, {
