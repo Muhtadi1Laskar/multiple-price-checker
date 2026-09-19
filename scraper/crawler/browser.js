@@ -7,7 +7,7 @@ let browserPromise;
 const getBrowser = () => {
     if (!browserPromise) {
         browserPromise = chromium.launch({
-            headless: false
+            headless: true
         });
     }
     return browserPromise;

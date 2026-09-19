@@ -3,6 +3,9 @@ node_modules/
 */node_modules/
 */*/node_modules/
 notes.md
+scraper/host.log
+scraper/host-launcher.bat
+scraper/com.bookpricecompare.host.json
 
 # Also ignore common Node.js files you don't want to track
 *.log
