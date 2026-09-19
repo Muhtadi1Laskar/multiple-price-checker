@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { extractNumber } from "../utils/utils.js";
 
 export const getPage = async () => {
     const browser = await chromium.launch({
@@ -66,10 +67,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
     const bookPriceSelector = ".slot-price";
 
     const searchLocator = page.getByRole("searchbox", { name: "Search Amazon.in" });
-    const bookItemLocator = page.locator(bookItemSelector);
-    const bookTypeLocator = page.locator(bookTypeSelector);
-    const bookPriceLocator = page.locator(bookPriceSelector);
-
+    const bookItemLocator = page.locator(bookItemSelector).first();
 
     try {
         await page.goto(url);
@@ -78,40 +76,43 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         await searchLocator.press("Enter");
 
         await bookItemLocator.waitFor({ state: "visible" });
-        await bookItemLocator.click();
-        // await page.locator("div#buybox-top-container span.a-button-inner").waitFor({ state: "visible" });
-        await page.waitForSelector(".a-button-inner .slot-title", { timeout: 10000 });
 
-        
-        const editionButtons = page.locator("div#buybox-top-container span.a-button-inner");
-        await editionButtons.waitFor({ state: "visible" });
+        const [productPage] = await Promise.all([
+            page.waitForEvent("popup"),
+            bookItemLocator.click()
+        ]);
 
+        await productPage.waitForLoadState("domcontentloaded");
+
+        const editionButtons = productPage.locator("#buybox-top-container span.a-button-inner");
         const count = await editionButtons.count();
-
-        console.log("Count: ", count);
 
         const editions = [];
 
         for (let i = 0; i < count; i++) {
             const button = editionButtons.nth(i);
 
-            const title = await button.locator(".slot-title").textContent();
+            const bookType = await button.locator(".slot-title").textContent();
             const price = await button.locator(".slot-price").textContent();
+            const cleanPrice = extractNumber(price);
+
+            if (bookType.includes("Audiobook")) continue;
 
             editions.push({
-                title: title?.trim(),
-                price: price?.trim()
+                bookType: bookType?.trim(),
+                price: cleanPrice
             });
         }
 
-        console.log(editions);
-
-        console.log(editions);
-
-        await page.pause();
+        return {
+            bookPrices: editions,
+            link: productPage.url()
+        };
     } finally {
         await browser.close();
     }
 }
+
+
 
 

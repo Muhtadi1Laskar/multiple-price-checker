@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import { browserScraper } from './browser.js';
+import { extractNumber } from '../utils/utils.js';
 
 const websiteURLS = {
     baatighar: "https://baatighar.com/shop?search=",
@@ -8,14 +9,14 @@ const websiteURLS = {
 };
 
 const websiteConfig = [
-    // {
-    //     name: "baatighar",
-    //     baseURL: "https://baatighar.com/shop?search=",
-    //     linkSelector: "a.single_card_image_blk",
-    //     priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']",
-    //     url: "https://baatighar.com/",
-    //     scraperType: "http"
-    // },
+    {
+        name: "baatighar",
+        baseURL: "https://baatighar.com/shop?search=",
+        linkSelector: "a.single_card_image_blk",
+        priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']",
+        url: "https://baatighar.com/",
+        scraperType: "http"
+    },
     {
         name: "amazon india",
         baseURL: "https://www.amazon.in/s?k=",
@@ -121,12 +122,17 @@ export const getBookInfo = async (bookInfo) => {
         const { name, scraperType } = websiteInfo;
 
         if(scraperType === "browserAutomation") {
-            const data = await browserScraper(bookInfo, websiteInfo);
+            const { bookPrices, link } = await browserScraper(bookInfo, websiteInfo);
+            result.push({
+                name,
+                price: bookPrices,
+                discountPrice: 0,
+                link
+            })
+            continue;
         }
 
         const bookDetailsPageLink = await searchBook(bookInfo, websiteInfo);
-
-        console.log("Link: ", bookDetailsPageLink);
 
         if (!bookDetailsPageLink) {
             result.push({
@@ -139,7 +145,7 @@ export const getBookInfo = async (bookInfo) => {
         const rawHTML = await makeRequest(bookDetailsPageLink[0]);
         const $ = cheerio.load(rawHTML);
         const prices = $(websiteInfo.priceSelector)
-            .map((_, el) => parseFloat($(el).text().trim()))
+            .map((_, el) => extractNumber($(el).text().trim()))
             .get();
 
         const [discountPrice, price] = prices;
