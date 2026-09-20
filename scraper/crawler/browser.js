@@ -18,7 +18,7 @@ export const getPage = async () => {
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    return { browser, page, context };
+    return { page, context };
 }
 
 export const extractMainData = async (url) => {
@@ -27,7 +27,6 @@ export const extractMainData = async (url) => {
     try {
         const tagName = "button";
         const buttonName = "Specification";
-        const bookTitleSelector = "h1[class='bookTitle_bookName__B4CEH ']";
         const specificationTabLocator = page.getByRole(tagName, { name: buttonName });
 
         await blockExtraResources(page);
@@ -35,43 +34,40 @@ export const extractMainData = async (url) => {
         await page.goto(url);
         await specificationTabLocator.waitFor({ state: 'visible' });
         await specificationTabLocator.click();
-        await page.waitForTimeout(800);
+        // await page.waitForTimeout(800);
 
-        const title = await page.locator(bookTitleSelector).evaluate(node => {
-            return Array.from(node.childNodes)
-                .filter(child => child.nodeType === 3)
-                .map(child => child.textContent.trim())
-                .join('');
+        const isbnRow = page.locator("tr")
+            .filter({ hasText: "ISBN" });
+
+        await isbnRow.waitFor({
+            status: "attached",
+            timeout: 3000
         });
-        const isbnLocator = page.locator("tr")
-            .filter({ hasText: "ISBN" })
-            .locator("td")
-            .nth(1);
-        const publicationLocator = page.locator("tr")
-            .filter({ hasText: "Publisher" })
-            .locator("td")
-            .nth(1);
-        const authorLocator = page.locator("tr")
-            .filter({ hasText: "Author" })
-            .locator("td")
-            .nth(1);
-        const languageLocator = page.locator("tr")
-            .filter({ hasText: "Language" })
-            .locator("td")
-            .nth(1);
 
-        const isbn = await isbnLocator.isVisible() ?
-            await isbnLocator.textContent() :
-            null;
-        const publication = await publicationLocator.isVisible() ?
-            await publicationLocator.textContent() :
-            null;
-        const author = await authorLocator.isVisible() ?
-            await authorLocator.textContent() :
-            null;
-        const language = await languageLocator.isVisible() ?
-            await languageLocator.textContent() :
-            null;
+        const specification = await page.locator("tr").evaluateAll((rows) => {
+            const data = {};
+
+            for (const row of rows) {
+                const cells = row.querySelectorAll("td");
+
+                if (cells.length < 2) continue;
+
+                const key = cells[0].textContent?.trim();
+                const value = cells[1].textContent?.trim();
+
+                if (key && value) {
+                    data[key] = value;
+                }
+            }
+
+            return data;
+        });
+
+        const title = specification["Name"] ?? null;
+        const isbn = specification["ISBN"] ?? null;
+        const publication = specification["Publisher"] ?? null;
+        const author = specification["Author"] ?? null;
+        const language = specification["Language"] ?? null;
 
         const languageEN = bookLanguage[language] || null;
         const cleanTitle = removeParentheses(title);
@@ -104,13 +100,15 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         bookPriceSelector,
         priceCardSelector,
         publisherSelector,
-        authorSelector
+        authorSelector,
+        searchSelector
     } = selectors;
 
     const isbnQuery = language === "bn" ? isbn : `${title} ${isbn}`;
     const searchQuery = !isbn ? `${title} ${author}` : isbnQuery;
     const linkIdentifier = isbn ? isbn : title;
 
+    const searchLocator = page.locator(searchSelector);
     const bookItemLocator = page.locator(
         `//div[@class="a-section"]` +
         `//span[@data-component-type="s-product-image"]` +
@@ -123,8 +121,27 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         const fullSearchURL = new URL("/s", searchURL);
         fullSearchURL.searchParams.set("k", searchQuery);
 
+        // console.log("URL", fullSearchURL.toString());
+
+        // await page.goto(fullSearchURL.toString(), {
+        //     waitUntil: "domcontentloaded"
+        // });
+
         await page.goto(fullSearchURL.toString(), {
-            waitUntil: "domcontentloaded"
+            waitUntil: "commit",
+            timeout: 15000
+        });
+        // await searchLocator.fill(searchQuery);
+
+        // await Promise.all([
+        //     page.waitForNavigation({ waitUntil: "domcontentloaded" }).catch(() => { }),
+        //     searchLocator.press("Enter")
+
+        // ]);
+
+        await bookItemLocator.waitFor({
+            state: "attached",
+            timeout: 5000
         });
 
         const bookDetailsPageURL = await bookItemLocator.isVisible() ?

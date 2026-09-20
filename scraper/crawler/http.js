@@ -18,10 +18,11 @@ export const makeRequest = async (url) => {
             }
         });
 
-        if (!response.ok) throw new Error(`HTTP status error: ${response.status}: ${url}`);
+        if (!response.ok) {
+            throw new Error(`HTTP status error: ${response.status}: ${url}`);
+        }
 
-        const htmlBody = await response.text();
-        return htmlBody;
+        return response.text();
     } catch (error) {
         console.error("Error loading HTML body: ", error);
         return error;
@@ -42,14 +43,14 @@ const buildAttempts = (bookInfo) => {
 
     if (bookInfo.publication) {
         attempts.push({
-            type: "title",
+            type: "title-author-publication",
             query: `${bookInfo.title} ${bookInfo.author} ${bookInfo.publication}`.trim()
         });
     }
 
     if (bookInfo.author) {
         attempts.push({
-            type: "titleAndauthor",
+            type: "title-author",
             query: `${bookInfo.title} ${bookInfo.author}`.trim()
         });
     }
@@ -59,8 +60,8 @@ const buildAttempts = (bookInfo) => {
 
 
 const buildSearchURL = (baseURL, query) => {
-    const cleanQuery = !isNumeric(query) ? 
-        encodeURIComponent(query).replaceAll('%20', '+') : 
+    const cleanQuery = !isNumeric(query) ?
+        encodeURIComponent(query).replaceAll('%20', '+') :
         query;
     return baseURL + cleanQuery;
 }
@@ -113,10 +114,10 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     const { websiteName, selectors } = websiteInfo;
     const { title } = bookInfo;
     const bookDetailsPageLink = await searchBook(bookInfo, websiteInfo);
-    const { 
-        publisherSelector, 
-        priceSelector, 
-        authorSelector 
+    const {
+        publisherSelector,
+        priceSelector,
+        authorSelector
     } = selectors;
 
     if (!bookDetailsPageLink) {
@@ -150,61 +151,128 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     }
 }
 
+// export const getBookInfo = async (bookInfo) => {
+//     const finalResult = {};
+//     const result = [];
+
+//     for (const websiteInfo of websiteConfig) {
+//         const { scraperType } = websiteInfo;
+
+//         if (scraperType === "browserAutomation") {
+//             const {
+//                 bookPrices,
+//                 title,
+//                 publisher,
+//                 author,
+//                 link,
+//                 websiteName,
+//                 discountPrice,
+//                 message
+//             } = await browserScraper(bookInfo, websiteInfo);
+
+//             result.push({
+//                 websiteName,
+//                 title,
+//                 author,
+//                 publisher,
+//                 price: bookPrices,
+//                 discountPrice,
+//                 link,
+//                 message
+//             })
+//             continue;
+//         }
+
+//         const {
+//             websiteName,
+//             title,
+//             author,
+//             publisher,
+//             discountPrice,
+//             price,
+//             link,
+//             message
+//         } = await htmlScraper(bookInfo, websiteInfo);
+
+//         result.push({
+//             websiteName,
+//             title,
+//             author,
+//             publisher,
+//             discountPrice,
+//             price,
+//             link,
+//             message
+//         });
+//     }
+//     return result;
+// }
+
+
 export const getBookInfo = async (bookInfo) => {
-    const finalResult = {};
-    const result = [];
+    const results = await Promise.allSettled(
+        websiteConfig.map(async (websiteInfo) => {
+            if (websiteInfo.scraperType === "browserAutomation") {
+                const {
+                    bookPrices,
+                    title,
+                    publisher,
+                    author,
+                    link,
+                    websiteName,
+                    discountPrice,
+                    message
+                } = await browserScraper(bookInfo, websiteInfo);
 
-    for (const websiteInfo of websiteConfig) {
-        const { scraperType } = websiteInfo;
+                return {
+                    websiteName,
+                    title,
+                    author,
+                    publisher,
+                    price: bookPrices,
+                    discountPrice,
+                    link,
+                    message
+                };
+            }
 
-        if (scraperType === "browserAutomation") {
             const {
-                bookPrices,
-                title,
-                publisher,
-                author,
-                link,
                 websiteName,
+                title,
+                author,
+                publisher,
                 discountPrice,
+                price,
+                link,
                 message
-            } = await browserScraper(bookInfo, websiteInfo);
+            } = await htmlScraper(bookInfo, websiteInfo);
 
-            result.push({
+            return {
                 websiteName,
                 title,
                 author,
                 publisher,
-                price: bookPrices,
                 discountPrice,
+                price,
                 link,
                 message
-            })
-            continue;
+            };
+        })
+    );
+
+    return results.map((result, index) => {
+        if (result.status === "fulfilled") {
+            return result.value;
         }
 
-        const {
-            websiteName,
-            title,
-            author,
-            publisher,
-            discountPrice,
-            price,
-            link,
-            message
-        } = await htmlScraper(bookInfo, websiteInfo);
+        const { websiteName } = websiteConfig[index];
 
-        result.push({
+        return {
             websiteName,
-            title,
-            author,
-            publisher,
-            discountPrice,
-            price,
-            link,
-            message
-        });
-    }
-    return result;
+            title: bookInfo.title,
+            message: "Failed to scrape data"
+        };
+    })
 }
 
 

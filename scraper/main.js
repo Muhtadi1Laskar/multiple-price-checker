@@ -1,7 +1,7 @@
 import { extractMainData } from "./crawler/browser.js";
 import { getBookInfo, searchBook } from "./crawler/http.js";
 
-// const URL = "https://www.rokomari.com/book/340423/the-master-and-margarita";
+const URL = "https://www.rokomari.com/book/340423/the-master-and-margarita";
 // const URL = "https://www.rokomari.com/book/71605/blind-willow-sleeping-woman-and-other-stories";
 
 export const scrapeMultipleData = async (URL) => {
@@ -11,7 +11,7 @@ export const scrapeMultipleData = async (URL) => {
         return scrapedData;
     } catch(error) {
         console.error("Failed to scrape data", error);
-        return error;
+        throw error;
     }
 }
 

@@ -5,6 +5,9 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+
+
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 process.chdir(here); // so relative paths in your scraper behave like they do from the CLI
 
@@ -31,6 +34,10 @@ function log(...args) {
 const writeStdout = process.stdout.write.bind(process.stdout);
 console.log = console.info = console.debug = console.warn = console.error = (...a) => log(...a);
 process.stdout.write = (chunk) => { log(String(chunk).trimEnd()); return true; };
+
+console.log("Node version:", process.version);
+console.log("Node executable:", process.execPath);
+console.log("cwd:", process.cwd());
 
 /* ---------- Chrome native messaging framing ---------- */
 // Each message: 4-byte length (native byte order) followed by UTF-8 JSON.
