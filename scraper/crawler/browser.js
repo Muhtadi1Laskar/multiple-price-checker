@@ -7,7 +7,11 @@ let browserPromise;
 const getBrowser = () => {
     if (!browserPromise) {
         browserPromise = chromium.launch({
-            headless: true
+            headless: false,
+            args: [
+                "--window-position=-32000,-32000", // Pushes window far off-screen
+                "--window-size=1280,800"
+            ]
         });
     }
     return browserPromise;
@@ -15,7 +19,7 @@ const getBrowser = () => {
 
 export const getPage = async () => {
     const browser = await getBrowser();
-    const context = await browser.newContext();
+    const context = await browser.newContext({ viewport: null });
     const page = await context.newPage();
 
     return { page, context };
@@ -37,7 +41,7 @@ export const extractMainData = async (url) => {
         // await page.waitForTimeout(800);
 
         const isbnRow = page.locator("tr")
-            .filter({ hasText: "ISBN" });
+            .filter({ hasText: "Name" });
 
         await isbnRow.waitFor({
             status: "attached",
@@ -121,27 +125,8 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         const fullSearchURL = new URL("/s", searchURL);
         fullSearchURL.searchParams.set("k", searchQuery);
 
-        // console.log("URL", fullSearchURL.toString());
-
-        // await page.goto(fullSearchURL.toString(), {
-        //     waitUntil: "domcontentloaded"
-        // });
-
         await page.goto(fullSearchURL.toString(), {
-            waitUntil: "commit",
-            timeout: 15000
-        });
-        // await searchLocator.fill(searchQuery);
-
-        // await Promise.all([
-        //     page.waitForNavigation({ waitUntil: "domcontentloaded" }).catch(() => { }),
-        //     searchLocator.press("Enter")
-
-        // ]);
-
-        await bookItemLocator.waitFor({
-            state: "attached",
-            timeout: 5000
+            waitUntil: "domcontentloaded"
         });
 
         const bookDetailsPageURL = await bookItemLocator.isVisible() ?

@@ -117,7 +117,8 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     const {
         publisherSelector,
         priceSelector,
-        authorSelector
+        authorSelector,
+        stockStatusSelector
     } = selectors;
 
     if (!bookDetailsPageLink) {
@@ -137,6 +138,12 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
         .map((_, el) => extractNumber($(el).text().trim()))
         .get();
 
+    const stockStatus = {};
+    stockStatusSelector.forEach(element => {
+        let status = $(`td:contains('${element}') + td`).text().trim();
+        stockStatus[element] = status;
+    });
+    
     const [discountPrice, price] = prices;
 
     return {
@@ -147,66 +154,10 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
         discountPrice,
         price,
         link: bookDetailsPageLink[0],
+        stockStatus,
         message: "Successfully scraped the prices"
     }
 }
-
-// export const getBookInfo = async (bookInfo) => {
-//     const finalResult = {};
-//     const result = [];
-
-//     for (const websiteInfo of websiteConfig) {
-//         const { scraperType } = websiteInfo;
-
-//         if (scraperType === "browserAutomation") {
-//             const {
-//                 bookPrices,
-//                 title,
-//                 publisher,
-//                 author,
-//                 link,
-//                 websiteName,
-//                 discountPrice,
-//                 message
-//             } = await browserScraper(bookInfo, websiteInfo);
-
-//             result.push({
-//                 websiteName,
-//                 title,
-//                 author,
-//                 publisher,
-//                 price: bookPrices,
-//                 discountPrice,
-//                 link,
-//                 message
-//             })
-//             continue;
-//         }
-
-//         const {
-//             websiteName,
-//             title,
-//             author,
-//             publisher,
-//             discountPrice,
-//             price,
-//             link,
-//             message
-//         } = await htmlScraper(bookInfo, websiteInfo);
-
-//         result.push({
-//             websiteName,
-//             title,
-//             author,
-//             publisher,
-//             discountPrice,
-//             price,
-//             link,
-//             message
-//         });
-//     }
-//     return result;
-// }
 
 
 export const getBookInfo = async (bookInfo) => {
