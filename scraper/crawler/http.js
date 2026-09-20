@@ -140,10 +140,10 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
 
     const stockStatus = {};
     stockStatusSelector.forEach(element => {
-        let status = $(`td:contains('${element}') + td`).text().trim();
+        const status = $(`td:contains('${element}') + td`).text().trim();
         stockStatus[element] = status;
     });
-    
+
     const [discountPrice, price] = prices;
 
     return {
