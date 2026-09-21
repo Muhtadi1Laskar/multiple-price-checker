@@ -140,8 +140,8 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
     const stockStatus = Object.fromEntries(
         Object.entries(stockStatusSelector).map(([key, value]) => {
             const rawStatus = $(`td:contains('${key}') + td`).text().trim();
-            const statusText = rawStatus.toLocaleLowerCase() === "available" ? 
-                "In Stock" : 
+            const statusText = rawStatus.toLocaleLowerCase() === "available" ?
+                "In Stock" :
                 "Not available";
             return [value, statusText];
         })
@@ -178,6 +178,18 @@ export const getBookInfo = async (bookInfo) => {
                     stockStatus,
                     message
                 } = await browserScraper(bookInfo, websiteInfo);
+
+                console.log(
+                    bookPrices,
+                    title,
+                    publisher,
+                    author,
+                    link,
+                    websiteName,
+                    discountPrice,
+                    stockStatus,
+                    message
+                );
 
                 return {
                     websiteName,

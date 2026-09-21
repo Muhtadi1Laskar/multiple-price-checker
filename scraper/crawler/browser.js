@@ -8,10 +8,10 @@ const getBrowser = () => {
     if (!browserPromise) {
         browserPromise = chromium.launch({
             headless: false,
-            args: [
-                "--window-position=-32000,-32000",
-                "--window-size=1280,800"
-            ]
+            // args: [
+            //     "--window-position=-32000,-32000",
+            //     "--window-size=1280,800"
+            // ]
         });
     }
     return browserPromise;
@@ -175,9 +175,12 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
 
             const bookType = await button.locator(bookTypeSelector).textContent();
             const price = await button.locator(bookPriceSelector).textContent();
-            const cleanPrice = extractNumber(price);
+            let cleanPrice = extractNumber(price);
 
             if (bookType.includes("Audiobook")) continue;
+            if(!cleanPrice) {
+                cleanPrice = null;
+            }
 
             editions.push({
                 bookType: bookType?.trim(),
