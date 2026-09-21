@@ -8,10 +8,10 @@ const getBrowser = () => {
     if (!browserPromise) {
         browserPromise = chromium.launch({
             headless: false,
-            // args: [
-            //     "--window-position=-32000,-32000", // Pushes window far off-screen
-            //     "--window-size=1280,800"
-            // ]
+            args: [
+                "--window-position=-32000,-32000",
+                "--window-size=1280,800"
+            ]
         });
     }
     return browserPromise;
