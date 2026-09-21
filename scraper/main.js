@@ -15,7 +15,7 @@ export const scrapeMultipleData = async (URL) => {
     }
 }
 
-(async () => {
-    const data = await scrapeMultipleData(URL);
-    console.log(JSON.stringify(data, null, 2));
-})();
+// (async () => {
+//     const data = await scrapeMultipleData(URL);
+//     console.log(JSON.stringify(data, null, 2));
+// })();
