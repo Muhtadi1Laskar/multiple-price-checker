@@ -32,7 +32,7 @@ export const websiteConfig = [
             priceCardSelector: "#buybox-top-container span.a-button-inner",
             publisherSelector: "(//span[contains(text(), 'Publisher')])[2]//following-sibling::span",
             authorSelector: "span[class='author notFaded'] a",
-            stockStatusSelector: "//div[@id='availability']//span[contains(text(), 'In stock')]" 
+            stockStatusSelector: "//div[@id='availability']//span[contains(text(), 'In stock') or contains(text(), ' Only 1 left in stock. ')]" 
         }
     }
 ];
