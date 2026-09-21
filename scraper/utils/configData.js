@@ -9,31 +9,32 @@ export const websiteConfig = [
             publisherSelector: "h6:contains('Publication'):eq(0) + a span",
             priceSelector: "div[class*='product_price'] span[class*='oe_currency_value']",
             authorSelector: "a[class*='single_product_author_name'] span",
-            stockStatusSelector: [
-                "অনলাইন",
-                "ঢাকা শাখা",
-                "সিলেট শাখা",
-                "চট্টগ্রাম শাখা",
-                "রাজশাহী শাখা"
-            ]
+            stockStatusSelector: {
+                "অনলাইন": "online",
+                "ঢাকা শাখা": "Dhaka branch",
+                "সিলেট শাখা": "Sylhet branch",
+                "চট্টগ্রাম শাখা": "Chittagong branch",
+                "রাজশাহী শাখা": "Rajshahi branch"
+            }
         }
     },
-    // {
-    //     websiteName: "amazon.in",
-    //     searchURL: "https://www.amazon.in/s?k=",
-    //     linkSelector: "div[data-cy='title-receipe'].nth-child(1)",
-    //     priceSelector: "div.a-section.apex-core-price-identifier .a-price-whole",
-    //     url: "https://www.amazon.in/",
-    //     scraperType: "browserAutomation",
-    //     selectors: {
-    //         bookTypeSelector: ".slot-title",
-    //         bookPriceSelector: ".slot-price",
-    //         searchSelector: "div.nav-search-field input",
-    //         priceCardSelector: "#buybox-top-container span.a-button-inner",
-    //         publisherSelector: "(//span[contains(text(), 'Publisher')])[2]//following-sibling::span",
-    //         authorSelector: "span[class='author notFaded'] a"
-    //     }
-    // }
+    {
+        websiteName: "amazon.in",
+        searchURL: "https://www.amazon.in/s?k=",
+        linkSelector: "div[data-cy='title-receipe'].nth-child(1)",
+        priceSelector: "div.a-section.apex-core-price-identifier .a-price-whole",
+        url: "https://www.amazon.in/",
+        scraperType: "browserAutomation",
+        selectors: {
+            bookTypeSelector: ".slot-title",
+            bookPriceSelector: ".slot-price",
+            searchSelector: "div.nav-search-field input",
+            priceCardSelector: "#buybox-top-container span.a-button-inner",
+            publisherSelector: "(//span[contains(text(), 'Publisher')])[2]//following-sibling::span",
+            authorSelector: "span[class='author notFaded'] a",
+            stockStatusSelector: "div#availability span"
+        }
+    }
 ];
 
 export const bookLanguage = {

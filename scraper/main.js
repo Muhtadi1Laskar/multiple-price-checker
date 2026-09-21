@@ -1,8 +1,8 @@
 import { extractMainData } from "./crawler/browser.js";
 import { getBookInfo, searchBook } from "./crawler/http.js";
 
-const URL = "https://www.rokomari.com/book/340423/the-master-and-margarita";
-// const URL = "https://www.rokomari.com/book/150644/complete-adventures-of-feluda-vol-1";
+// const URL = "https://www.rokomari.com/book/340423/the-master-and-margarita";
+const URL = "https://www.rokomari.com/book/254498/a-room-of-one-s-own";
 
 export const scrapeMultipleData = async (URL) => {
     try {

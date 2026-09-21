@@ -66,11 +66,10 @@ const buildSearchURL = (baseURL, query) => {
     return baseURL + cleanQuery;
 }
 
-const getDetailsPageLink = ({ rawHTML, linkSelector, url, bookTitle }) => {
+const getDetailsPageLink = ({ rawHTML, linkSelector, url }) => {
     const $ = cheerio.load(rawHTML);
 
     return $(linkSelector)
-        // .filter((_, element) => $(element).text().trim() === bookTitle)
         .map((_, element) => {
             const href = $(element).attr("href");
 
@@ -138,11 +137,15 @@ export const htmlScraper = async (bookInfo, websiteInfo) => {
         .map((_, el) => extractNumber($(el).text().trim()))
         .get();
 
-    const stockStatus = {};
-    stockStatusSelector.forEach(element => {
-        const status = $(`td:contains('${element}') + td`).text().trim();
-        stockStatus[element] = status;
-    });
+    const stockStatus = Object.fromEntries(
+        Object.entries(stockStatusSelector).map(([key, value]) => {
+            const rawStatus = $(`td:contains('${key}') + td`).text().trim();
+            const statusText = rawStatus.toLocaleLowerCase() === "available" ? 
+                "In Stock" : 
+                "Not available";
+            return [value, statusText];
+        })
+    );
 
     const [discountPrice, price] = prices;
 
@@ -172,6 +175,7 @@ export const getBookInfo = async (bookInfo) => {
                     link,
                     websiteName,
                     discountPrice,
+                    stockStatus,
                     message
                 } = await browserScraper(bookInfo, websiteInfo);
 
@@ -182,6 +186,7 @@ export const getBookInfo = async (bookInfo) => {
                     publisher,
                     price: bookPrices,
                     discountPrice,
+                    stockStatus,
                     link,
                     message
                 };
@@ -195,6 +200,7 @@ export const getBookInfo = async (bookInfo) => {
                 discountPrice,
                 price,
                 link,
+                stockStatus,
                 message
             } = await htmlScraper(bookInfo, websiteInfo);
 
@@ -206,6 +212,7 @@ export const getBookInfo = async (bookInfo) => {
                 discountPrice,
                 price,
                 link,
+                stockStatus,
                 message
             };
         })

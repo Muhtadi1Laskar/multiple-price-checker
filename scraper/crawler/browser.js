@@ -8,10 +8,10 @@ const getBrowser = () => {
     if (!browserPromise) {
         browserPromise = chromium.launch({
             headless: false,
-            args: [
-                "--window-position=-32000,-32000", // Pushes window far off-screen
-                "--window-size=1280,800"
-            ]
+            // args: [
+            //     "--window-position=-32000,-32000", // Pushes window far off-screen
+            //     "--window-size=1280,800"
+            // ]
         });
     }
     return browserPromise;
@@ -105,14 +105,13 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         priceCardSelector,
         publisherSelector,
         authorSelector,
-        searchSelector
+        stockStatusSelector
     } = selectors;
 
     const isbnQuery = language === "bn" ? isbn : `${title} ${isbn}`;
     const searchQuery = !isbn ? `${title} ${author}` : isbnQuery;
     const linkIdentifier = isbn ? isbn : title;
 
-    const searchLocator = page.locator(searchSelector);
     const bookItemLocator = page.locator(
         `//div[@class="a-section"]` +
         `//span[@data-component-type="s-product-image"]` +
@@ -152,6 +151,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
 
         const publisherLocator = page.locator(publisherSelector);
         const authorLocator = page.locator(authorSelector);
+        const stockStatusLocator = page.locator(stockStatusSelector);
 
         const publisher = await publisherLocator.isVisible() ?
             await publisherLocator.textContent() :
@@ -159,6 +159,11 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         const author = await authorLocator.first().isVisible() ?
             await authorLocator.first().textContent() :
             null;
+        const stockStatus = {
+            online: await stockStatusLocator.isVisible() ?
+                "In stock" :
+                "Not available"
+        };
 
         const editionButtons = page.locator(priceCardSelector);
         const count = await editionButtons.count();
@@ -188,6 +193,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
             bookPrices: editions,
             discountPrice: null,
             link: page.url(),
+            stockStatus,
             message: "Successfully scraped the prices"
         };
     } catch (error) {
