@@ -41,7 +41,7 @@ export const amazonScraper = async (bookInfo, websiteInfo) => {
         await page.goto(fullSearchURL.toString(), {
             waitUntil: "domcontentloaded"
         });
-        await page.waitForTimeout(200);
+        // await page.waitForTimeout(700);
 
         const bookDetailsPageURL = await bookItemLocator.isVisible() ?
             await bookItemLocator.getAttribute("href") :
