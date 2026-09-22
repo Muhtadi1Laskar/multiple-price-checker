@@ -1,29 +1,7 @@
-import { chromium } from "playwright";
 import { extractNumber, removeParentheses } from "../utils/utils.js";
 import { bookLanguage } from "../utils/configData.js";
+import { getPage } from "../infrastructure/browsers.js";
 
-let browserPromise;
-
-const getBrowser = () => {
-    if (!browserPromise) {
-        browserPromise = chromium.launch({
-            headless: false,
-            args: [
-                "--window-position=-32000,-32000",
-                "--window-size=1280,800"
-            ]
-        });
-    }
-    return browserPromise;
-}
-
-export const getPage = async () => {
-    const browser = await getBrowser();
-    const context = await browser.newContext({ viewport: null });
-    const page = await context.newPage();
-
-    return { page, context };
-}
 
 export const extractMainData = async (url) => {
     const { page, context } = await getPage();
