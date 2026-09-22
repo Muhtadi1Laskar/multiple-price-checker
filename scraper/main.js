@@ -1,5 +1,5 @@
-import { extractMainData } from "./crawler/browser.js";
 import { getBookInfo, searchBook } from "./crawler/http.js";
+import { extractMainData } from "./sources/rokomari/bookIdentityExtractor.js";
 
 // const URL = "https://www.rokomari.com/book/340423/the-master-and-margarita";
 const URL = "https://www.rokomari.com/book/254498/a-room-of-one-s-own";
