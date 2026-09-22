@@ -2,7 +2,7 @@ import * as cheerio from 'cheerio';
 import { extractNumber } from '../utils/utils.js';
 import { websiteConfig } from '../utils/configData.js';
 import { makeRequest } from '../infrastructure/httpClient.js';
-import { amazonScraper } from '../seller/baatighar/scraper.js';
+import { amazonScraper } from '../seller/amazon/scraper.js';
 
 const isNumeric = str => !isNaN(Number(str));
 
