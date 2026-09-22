@@ -3,9 +3,6 @@ import { blockExtraResources } from "../../infrastructure/resourceBlocking.js";
 import { extractNumber } from "../../utils/utils.js";
 
 
-
-
-
 export const amazonScraper = async (bookInfo, websiteInfo) => {
     const { page, context } = await getPage();
     const { websiteName, url, selectors, searchURL } = websiteInfo;
