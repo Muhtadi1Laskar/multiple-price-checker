@@ -1,4 +1,4 @@
-import { getBookInfo, searchBook } from "./crawler/http.js";
+import { getBookInfo } from "./crawler/http.js";
 import { extractMainData } from "./sources/rokomari/bookIdentityExtractor.js";
 
 // const URL = "https://www.rokomari.com/book/340423/the-master-and-margarita";

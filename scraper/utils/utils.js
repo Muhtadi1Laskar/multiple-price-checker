@@ -28,3 +28,5 @@ export const removeParentheses = (str) => {
         .replace(/\s+/g, ' ')
         .trim();
 };
+
+export const isNumeric = str => !isNaN(Number(str));
