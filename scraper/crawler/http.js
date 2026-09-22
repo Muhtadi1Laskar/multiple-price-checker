@@ -1,8 +1,8 @@
 import * as cheerio from 'cheerio';
-import { browserScraper } from './browser.js';
 import { extractNumber } from '../utils/utils.js';
 import { websiteConfig } from '../utils/configData.js';
 import { makeRequest } from '../infrastructure/httpClient.js';
+import { amazonScraper } from '../seller/baatighar/scraper.js';
 
 const isNumeric = str => !isNaN(Number(str));
 
@@ -152,7 +152,7 @@ export const getBookInfo = async (bookInfo) => {
                     discountPrice,
                     stockStatus,
                     message
-                } = await browserScraper(bookInfo, websiteInfo);
+                } = await amazonScraper(bookInfo, websiteInfo);
 
                 console.log(
                     bookPrices,

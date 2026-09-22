@@ -1,8 +1,9 @@
-import { extractNumber } from "../utils/utils.js";
-import { getPage } from "../infrastructure/browsers.js";
-import { blockExtraResources } from "../infrastructure/resourceBlocking.js";
+import { getPage } from "../../infrastructure/browsers.js";
+import { blockExtraResources } from "../../infrastructure/resourceBlocking.js";
+import { extractNumber } from "../../utils/utils.js";
 
-export const browserScraper = async (bookInfo, websiteInfo) => {
+
+export const amazonScraper = async (bookInfo, websiteInfo) => {
     const { page, context } = await getPage();
     const { websiteName, url, selectors, searchURL } = websiteInfo;
     const {
