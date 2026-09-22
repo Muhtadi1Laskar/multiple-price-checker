@@ -1,5 +1,5 @@
-import { blockExtraResources } from "../../crawler/browser.js";
 import { getPage } from "../../infrastructure/browsers.js";
+import { blockExtraResources } from "../../infrastructure/resourceBlocking.js";
 import { bookLanguage } from "../../utils/configData.js";
 import { removeParentheses } from "../../utils/utils.js";
 

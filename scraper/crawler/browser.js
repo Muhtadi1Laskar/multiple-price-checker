@@ -1,6 +1,6 @@
 import { extractNumber } from "../utils/utils.js";
 import { getPage } from "../infrastructure/browsers.js";
-
+import { blockExtraResources } from "../infrastructure/resourceBlocking.js";
 
 export const browserScraper = async (bookInfo, websiteInfo) => {
     const { page, context } = await getPage();
@@ -40,6 +40,7 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
         await page.goto(fullSearchURL.toString(), {
             waitUntil: "domcontentloaded"
         });
+        await page.waitForTimeout(200);
 
         const bookDetailsPageURL = await bookItemLocator.isVisible() ?
             await bookItemLocator.getAttribute("href") :
@@ -126,19 +127,4 @@ export const browserScraper = async (bookInfo, websiteInfo) => {
 }
 
 
-export const blockExtraResources = async (page) => {
-    await page.route("**/*", async (route) => {
-        const resourceType = route.request().resourceType();
 
-        if (
-            resourceType === "image" ||
-            resourceType === "font" ||
-            resourceType === "media"
-        ) {
-            await route.abort();
-            return;
-        }
-
-        await route.continue();
-    });
-}
