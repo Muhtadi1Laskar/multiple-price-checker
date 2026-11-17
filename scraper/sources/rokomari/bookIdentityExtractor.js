@@ -8,7 +8,7 @@ export const extractMainData = async (url) => {
 
     try {
         const tagName = "button";
-        const buttonName = "Specification";
+        const buttonName = 'স্পেসিফিকেশন';
         const specificationTabLocator = page.getByRole(tagName, { name: buttonName });
 
         await blockExtraResources(page);
